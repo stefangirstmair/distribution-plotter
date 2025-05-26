@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dynare Prior Plotter</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.5/jstat.min.js"></script>
@@ -39,6 +39,7 @@
 </head>
 <body>
   <h1>Dynare Prior Distribution Plotter</h1>
+
   <label>Distribution:
     <select id="dist">
       <option value="normal">Normal</option>
@@ -57,6 +58,10 @@
     <input type="number" id="sd" value="1" step="any" />
   </label>
 
+  <label>Initial Value (optional):
+    <input type="number" id="init" step="any" />
+  </label>
+
   <div class="plot" id="plot"></div>
   <div class="info" id="params"></div>
   <div class="info" id="dynare"></div>
@@ -66,11 +71,14 @@
     const distEl = document.getElementById("dist");
     const meanEl = document.getElementById("mean");
     const sdEl = document.getElementById("sd");
+    const initEl = document.getElementById("init");
 
     function updatePlot() {
       const dist = distEl.value;
       const mean = parseFloat(meanEl.value);
       const sd = parseFloat(sdEl.value);
+      const initVal = parseFloat(initEl.value);
+      const hasInit = !isNaN(initVal);
 
       const x = [];
       const y = [];
@@ -78,19 +86,21 @@
       const min = mean - 4 * sd;
       const max = mean + 4 * sd;
 
-      let dynareLine = ``;
       let paramInfo = "";
+      let dynareLine = "";
 
       for (let i = 0; i < n; i++) {
         const xi = min + (i / (n - 1)) * (max - min);
         x.push(xi);
-
         let yi = 0;
+
         switch (dist) {
           case "normal":
             yi = jStat.normal.pdf(xi, mean, sd);
             paramInfo = `N(${mean.toFixed(2)}, ${sd.toFixed(2)})`;
-            dynareLine = `estimated_param, normal, ${mean}, ${sd};`;
+            dynareLine = hasInit
+              ? `estimated_param, ${initVal}, normal, ${mean}, ${sd};`
+              : `estimated_param, normal, ${mean}, ${sd};`;
             break;
 
           case "beta": {
@@ -98,7 +108,9 @@
             const beta = alpha * (1 / mean - 1);
             yi = (xi >= 0 && xi <= 1) ? jStat.beta.pdf(xi, alpha, beta) : 0;
             paramInfo = `Beta(α=${alpha.toFixed(2)}, β=${beta.toFixed(2)})`;
-            dynareLine = `estimated_param, beta, ${mean}, ${sd};`;
+            dynareLine = hasInit
+              ? `estimated_param, ${initVal}, beta, ${mean}, ${sd};`
+              : `estimated_param, beta, ${mean}, ${sd};`;
             break;
           }
 
@@ -107,7 +119,9 @@
             const scale = (sd * sd) / mean;
             yi = xi > 0 ? jStat.gamma.pdf(xi, shape, scale) : 0;
             paramInfo = `Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
-            dynareLine = `estimated_param, gamma, ${mean}, ${sd};`;
+            dynareLine = hasInit
+              ? `estimated_param, ${initVal}, gamma, ${mean}, ${sd};`
+              : `estimated_param, gamma, ${mean}, ${sd};`;
             break;
           }
 
@@ -116,7 +130,9 @@
             const scale = mean * (shape - 1);
             yi = xi > 0 ? jStat.invgamma.pdf(xi, shape, scale) : 0;
             paramInfo = `Inv-Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
-            dynareLine = `estimated_param, inv_gamma, ${mean}, ${sd};`;
+            dynareLine = hasInit
+              ? `estimated_param, ${initVal}, inv_gamma, ${mean}, ${sd};`
+              : `estimated_param, inv_gamma, ${mean}, ${sd};`;
             break;
           }
 
@@ -126,24 +142,41 @@
             const b = mean + halfRange;
             yi = (xi >= a && xi <= b) ? jStat.uniform.pdf(xi, a, b - a) : 0;
             paramInfo = `Uniform(a=${a.toFixed(2)}, b=${b.toFixed(2)})`;
-            dynareLine = `estimated_param, uniform, ${mean}, ${sd};`;
+            dynareLine = hasInit
+              ? `estimated_param, ${initVal}, uniform, ${mean}, ${sd};`
+              : `estimated_param, uniform, ${mean}, ${sd};`;
             break;
           }
         }
+
         y.push(yi);
       }
 
-      Plotly.newPlot("plot", [{
+      const data = [{
         x: x,
         y: y,
         type: 'scatter',
         mode: 'lines',
+        name: 'Distribution',
         line: { color: '#2563eb' }
-      }], {
+      }];
+
+      if (hasInit) {
+        data.push({
+          x: [initVal, initVal],
+          y: [0, Math.max(...y) * 1.1],
+          mode: 'lines',
+          name: 'Initial Value',
+          line: { color: 'red', width: 2, dash: 'dash' }
+        });
+      }
+
+      Plotly.newPlot("plot", data, {
         title: `${dist.toUpperCase()} Prior Distribution`,
         xaxis: { title: "Value" },
         yaxis: { title: "Density" },
         margin: { t: 40, l: 50, r: 20, b: 50 },
+        legend: { orientation: "h", y: -0.2 }
       });
 
       document.getElementById("params").textContent = `Parameters: ${paramInfo}`;
@@ -151,12 +184,13 @@
     }
 
     function downloadPlot() {
-      Plotly.downloadImage("plot", {format: 'png', filename: 'dynare_prior_plot'});
+      Plotly.downloadImage("plot", { format: 'png', filename: 'dynare_prior_plot' });
     }
 
     distEl.addEventListener("change", updatePlot);
     meanEl.addEventListener("input", updatePlot);
     sdEl.addEventListener("input", updatePlot);
+    initEl.addEventListener("input", updatePlot);
 
     updatePlot();
   </script>
