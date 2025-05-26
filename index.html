@@ -194,5 +194,15 @@
 
     updatePlot();
   </script>
+    <footer style="margin-top: 3rem; font-size: 0.9rem; text-align: center; color: gray;">
+    <p>&copy; Stefan Girstmair — <a href="https://stefangirstmair.github.io/" target="_blank">Website</a><br>
+    Last updated: <span id="last-updated"></span></p>
+  </footer>
+
+  <script>
+    document.getElementById("last-updated").textContent = new Date().toLocaleDateString('en-GB', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+  </script>
 </body>
 </html>
