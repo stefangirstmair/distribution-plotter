@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynare Prior Plotter</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.5/jstat.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 2rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input, select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .plot {
+      margin-top: 2rem;
+    }
+    .info {
+      margin-top: 1rem;
+      font-family: monospace;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dynare Prior Distribution Plotter</h1>
+  <label>Distribution:
+    <select id="dist">
+      <option value="normal">Normal</option>
+      <option value="beta">Beta</option>
+      <option value="gamma">Gamma</option>
+      <option value="inv_gamma">Inverse Gamma</option>
+      <option value="uniform">Uniform</option>
+    </select>
+  </label>
+
+  <label>Mean:
+    <input type="number" id="mean" value="0" step="any" />
+  </label>
+
+  <label>Standard Deviation:
+    <input type="number" id="sd" value="1" step="any" />
+  </label>
+
+  <div class="plot" id="plot"></div>
+  <div class="info" id="params"></div>
+  <div class="info" id="dynare"></div>
+  <button onclick="downloadPlot()">Export as PNG</button>
+
+  <script>
+    const distEl = document.getElementById("dist");
+    const meanEl = document.getElementById("mean");
+    const sdEl = document.getElementById("sd");
+
+    function updatePlot() {
+      const dist = distEl.value;
+      const mean = parseFloat(meanEl.value);
+      const sd = parseFloat(sdEl.value);
+
+      const x = [];
+      const y = [];
+      const n = 500;
+      const min = mean - 4 * sd;
+      const max = mean + 4 * sd;
+
+      let dynareLine = ``;
+      let paramInfo = "";
+
+      for (let i = 0; i < n; i++) {
+        const xi = min + (i / (n - 1)) * (max - min);
+        x.push(xi);
+
+        let yi = 0;
+        switch (dist) {
+          case "normal":
+            yi = jStat.normal.pdf(xi, mean, sd);
+            paramInfo = `N(${mean.toFixed(2)}, ${sd.toFixed(2)})`;
+            dynareLine = `estimated_param, normal, ${mean}, ${sd};`;
+            break;
+
+          case "beta": {
+            const alpha = ((1 - mean) / (sd * sd) - 1 / mean) * mean * mean;
+            const beta = alpha * (1 / mean - 1);
+            yi = (xi >= 0 && xi <= 1) ? jStat.beta.pdf(xi, alpha, beta) : 0;
+            paramInfo = `Beta(α=${alpha.toFixed(2)}, β=${beta.toFixed(2)})`;
+            dynareLine = `estimated_param, beta, ${mean}, ${sd};`;
+            break;
+          }
+
+          case "gamma": {
+            const shape = (mean * mean) / (sd * sd);
+            const scale = (sd * sd) / mean;
+            yi = xi > 0 ? jStat.gamma.pdf(xi, shape, scale) : 0;
+            paramInfo = `Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
+            dynareLine = `estimated_param, gamma, ${mean}, ${sd};`;
+            break;
+          }
+
+          case "inv_gamma": {
+            const shape = 2 + (mean * mean) / (sd * sd);
+            const scale = mean * (shape - 1);
+            yi = xi > 0 ? jStat.invgamma.pdf(xi, shape, scale) : 0;
+            paramInfo = `Inv-Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
+            dynareLine = `estimated_param, inv_gamma, ${mean}, ${sd};`;
+            break;
+          }
+
+          case "uniform": {
+            const halfRange = sd * Math.sqrt(3);
+            const a = mean - halfRange;
+            const b = mean + halfRange;
+            yi = (xi >= a && xi <= b) ? jStat.uniform.pdf(xi, a, b - a) : 0;
+            paramInfo = `Uniform(a=${a.toFixed(2)}, b=${b.toFixed(2)})`;
+            dynareLine = `estimated_param, uniform, ${mean}, ${sd};`;
+            break;
+          }
+        }
+        y.push(yi);
+      }
+
+      Plotly.newPlot("plot", [{
+        x: x,
+        y: y,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: '#2563eb' }
+      }], {
+        title: `${dist.toUpperCase()} Prior Distribution`,
+        xaxis: { title: "Value" },
+        yaxis: { title: "Density" },
+        margin: { t: 40, l: 50, r: 20, b: 50 },
+      });
+
+      document.getElementById("params").textContent = `Parameters: ${paramInfo}`;
+      document.getElementById("dynare").textContent = `Dynare code: ${dynareLine}`;
+    }
+
+    function downloadPlot() {
+      Plotly.downloadImage("plot", {format: 'png', filename: 'dynare_prior_plot'});
+    }
+
+    distEl.addEventListener("change", updatePlot);
+    meanEl.addEventListener("input", updatePlot);
+    sdEl.addEventListener("input", updatePlot);
+
+    updatePlot();
+  </script>
+</body>
+</html>
