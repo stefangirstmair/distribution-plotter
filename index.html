@@ -124,7 +124,7 @@
             paramInfo = `N(${mean.toFixed(2)}, ${sd.toFixed(2)})`;
             dynareLine = hasInit
               ? `estimated_param, ${initVal}, normal_pdf, ${mean}, ${sd};`
-              : `estimated_param, normal, ${mean}, ${sd};`;
+              : `estimated_param, normal_pdf, ${mean}, ${sd};`;
             break;
 
           case "beta": {
@@ -134,7 +134,7 @@
             paramInfo = `Beta(α=${alpha.toFixed(2)}, β=${beta.toFixed(2)})`;
             dynareLine = hasInit
               ? `estimated_param, ${initVal}, beta_pdf, ${mean}, ${sd};`
-              : `estimated_param, beta, ${mean}, ${sd};`;
+              : `estimated_param, beta_pdf, ${mean}, ${sd};`;
             break;
           }
 
@@ -145,7 +145,7 @@
             paramInfo = `Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
             dynareLine = hasInit
               ? `estimated_param, ${initVal}, gamma_pdf, ${mean}, ${sd};`
-              : `estimated_param, gamma, ${mean}, ${sd};`;
+              : `estimated_param, gamma_pdf, ${mean}, ${sd};`;
             break;
           }
 
@@ -156,7 +156,7 @@
             paramInfo = `Inv-Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
             dynareLine = hasInit
               ? `estimated_param, ${initVal}, inv_gamma_pdf, ${mean}, ${sd};`
-              : `estimated_param, inv_gamma, ${mean}, ${sd};`;
+              : `estimated_param, inv_gamma_pdf, ${mean}, ${sd};`;
             break;
           }
 
@@ -168,7 +168,7 @@
             paramInfo = `Uniform(a=${a.toFixed(2)}, b=${b.toFixed(2)})`;
             dynareLine = hasInit
               ? `estimated_param, ${initVal}, uniform_pdf, ${mean}, ${sd};`
-              : `estimated_param, uniform, ${mean}, ${sd};`;
+              : `estimated_param, uniform_pdf, ${mean}, ${sd};`;
             break;
           }
         }
@@ -226,10 +226,19 @@
     Last updated: <span id="last-updated"></span></p>
   </footer>
 
-  <script>
-    document.getElementById("last-updated").textContent = new Date().toLocaleDateString('en-GB', {
-      year: 'numeric', month: 'long', day: 'numeric'
+<script>
+  fetch("https://api.github.com/repos/stefangirstmair/dynare-prior-plotter/commits?per_page=1")
+    .then(response => response.json())
+    .then(data => {
+      const commitDate = new Date(data[0].commit.committer.date);
+      const formattedDate = commitDate.toLocaleDateString('en-GB', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
+      document.getElementById("last-updated").textContent = formattedDate;
+    })
+    .catch(() => {
+      document.getElementById("last-updated").textContent = "unavailable";
     });
-  </script>
+</script>
 </body>
 </html>
