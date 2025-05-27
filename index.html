@@ -24,6 +24,13 @@
       width: 100%;
       box-sizing: border-box;
     }
+    .row {
+      display: flex;
+      gap: 1rem;
+    }
+    .row input {
+      width: 100%;
+    }
     .plot {
       margin-top: 2rem;
     }
@@ -64,8 +71,19 @@
   </label>
 
   <div class="plot" id="plot"></div>
+
+  <div class="row">
+    <label>Min X-axis:
+      <input type="number" id="xmin" step="any" placeholder="auto" />
+    </label>
+    <label>Max X-axis:
+      <input type="number" id="xmax" step="any" placeholder="auto" />
+    </label>
+  </div>
+
   <div class="info" id="params"></div>
   <div class="info" id="dynare"></div>
+
   <button onclick="downloadPlot()">Export as PNG</button>
 
   <script>
@@ -73,6 +91,8 @@
     const meanEl = document.getElementById("mean");
     const sdEl = document.getElementById("sd");
     const initEl = document.getElementById("init");
+    const xminEl = document.getElementById("xmin");
+    const xmaxEl = document.getElementById("xmax");
 
     function updatePlot() {
       const dist = distEl.value;
@@ -80,12 +100,15 @@
       const sd = parseFloat(sdEl.value);
       const initVal = parseFloat(initEl.value);
       const hasInit = !isNaN(initVal);
+      const manualMin = parseFloat(xminEl.value);
+      const manualMax = parseFloat(xmaxEl.value);
+
+      const min = !isNaN(manualMin) ? manualMin : mean - 4 * sd;
+      const max = !isNaN(manualMax) ? manualMax : mean + 4 * sd;
 
       const x = [];
       const y = [];
       const n = 500;
-      const min = mean - 4 * sd;
-      const max = mean + 4 * sd;
 
       let paramInfo = "";
       let dynareLine = "";
@@ -174,7 +197,7 @@
 
       Plotly.newPlot("plot", data, {
         title: `${dist.toUpperCase()} Prior Distribution`,
-        xaxis: { title: "Value" },
+        xaxis: { title: "Value", range: [min, max] },
         yaxis: { title: "Density" },
         margin: { t: 40, l: 50, r: 20, b: 50 },
         legend: { orientation: "h", y: -0.2 }
@@ -192,10 +215,13 @@
     meanEl.addEventListener("input", updatePlot);
     sdEl.addEventListener("input", updatePlot);
     initEl.addEventListener("input", updatePlot);
+    xminEl.addEventListener("input", updatePlot);
+    xmaxEl.addEventListener("input", updatePlot);
 
     updatePlot();
   </script>
-    <footer style="margin-top: 3rem; font-size: 0.9rem; text-align: center; color: gray;">
+
+  <footer style="margin-top: 3rem; font-size: 0.9rem; text-align: center; color: gray;">
     <p>&copy; Stefan Girstmair — <a href="https://stefangirstmair.github.io/" target="_blank">Website</a><br>
     Last updated: <span id="last-updated"></span></p>
   </footer>
