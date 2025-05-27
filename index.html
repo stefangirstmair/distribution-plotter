@@ -123,7 +123,7 @@
             yi = jStat.normal.pdf(xi, mean, sd);
             paramInfo = `N(${mean.toFixed(2)}, ${sd.toFixed(2)})`;
             dynareLine = hasInit
-              ? `estimated_param, ${initVal}, normal, ${mean}, ${sd};`
+              ? `estimated_param, ${initVal}, normal_pdf, ${mean}, ${sd};`
               : `estimated_param, normal, ${mean}, ${sd};`;
             break;
 
@@ -133,7 +133,7 @@
             yi = (xi >= 0 && xi <= 1) ? jStat.beta.pdf(xi, alpha, beta) : 0;
             paramInfo = `Beta(α=${alpha.toFixed(2)}, β=${beta.toFixed(2)})`;
             dynareLine = hasInit
-              ? `estimated_param, ${initVal}, beta, ${mean}, ${sd};`
+              ? `estimated_param, ${initVal}, beta_pdf, ${mean}, ${sd};`
               : `estimated_param, beta, ${mean}, ${sd};`;
             break;
           }
@@ -144,7 +144,7 @@
             yi = xi > 0 ? jStat.gamma.pdf(xi, shape, scale) : 0;
             paramInfo = `Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
             dynareLine = hasInit
-              ? `estimated_param, ${initVal}, gamma, ${mean}, ${sd};`
+              ? `estimated_param, ${initVal}, gamma_pdf, ${mean}, ${sd};`
               : `estimated_param, gamma, ${mean}, ${sd};`;
             break;
           }
@@ -155,7 +155,7 @@
             yi = xi > 0 ? jStat.invgamma.pdf(xi, shape, scale) : 0;
             paramInfo = `Inv-Gamma(shape=${shape.toFixed(2)}, scale=${scale.toFixed(2)})`;
             dynareLine = hasInit
-              ? `estimated_param, ${initVal}, inv_gamma, ${mean}, ${sd};`
+              ? `estimated_param, ${initVal}, inv_gamma_pdf, ${mean}, ${sd};`
               : `estimated_param, inv_gamma, ${mean}, ${sd};`;
             break;
           }
@@ -167,7 +167,7 @@
             yi = (xi >= a && xi <= b) ? jStat.uniform.pdf(xi, a, b - a) : 0;
             paramInfo = `Uniform(a=${a.toFixed(2)}, b=${b.toFixed(2)})`;
             dynareLine = hasInit
-              ? `estimated_param, ${initVal}, uniform, ${mean}, ${sd};`
+              ? `estimated_param, ${initVal}, uniform_pdf, ${mean}, ${sd};`
               : `estimated_param, uniform, ${mean}, ${sd};`;
             break;
           }
